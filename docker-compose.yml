@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+
+  minio:
+    image: minio/minio
+    command: server /data
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  public_api:
+    build: ./public_api
+    environment:
+      - SQLALCHEMY_DATABASE_URL="sqlURL"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  media_service:
+    build: ./media_service
+    environment:
+      - MINIO_ACCESS_KEY="minio"
+      - MINIO_SECRET_KEY="minio123"
+    depends_on:
+      - minio
